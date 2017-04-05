@@ -29,7 +29,7 @@ public class GuiHandler implements IGuiHandler
                     int blockedSlot = -1;
                     if (player.getHeldItemMainhand() == heldItem)
                         blockedSlot = player.inventory.currentItem;
-                    return new BagContainer(player.inventory, inventory, blockedSlot);
+                    return new BagContainer(player.inventory, inventory, blockedSlot, world);
                 }
                 break;
         }
@@ -50,7 +50,7 @@ public class GuiHandler implements IGuiHandler
                     int blockedSlot = -1;
                     if (player.getHeldItemMainhand() == heldItem)
                         blockedSlot = player.inventory.currentItem;
-                    return new BagGui(player.inventory, inventory, blockedSlot, heldItem);
+                    return new BagGui(player.inventory, inventory, blockedSlot, heldItem, world);
                 }
                 break;
         }

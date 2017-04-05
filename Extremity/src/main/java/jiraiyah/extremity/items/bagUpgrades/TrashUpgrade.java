@@ -18,6 +18,6 @@ public class TrashUpgrade extends BagUpgradeItemBase
     @Override
     public int getID()
     {
-        return 9;
+        return 11;
     }
 }

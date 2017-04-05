@@ -28,7 +28,7 @@ public class BagUpgradeSlot extends SlotItemHandler
     @Override
     public void putStack(@Nonnull ItemStack stack)
     {
-        if (owner instanceof BagInventory)
+        if (owner instanceof BagInventory && stack.getItem() instanceof BagUpgradeItemBase)
         {
             BagInventory bag = (BagInventory) owner;
             int id = ((BagUpgradeItemBase)stack.getItem()).getID();

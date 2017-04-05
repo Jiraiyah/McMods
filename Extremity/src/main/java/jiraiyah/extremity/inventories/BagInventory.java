@@ -17,6 +17,8 @@ public class BagInventory implements IItemHandlerModifiable
 
     private BagContainer container;
 
+    private byte slotCount = 1;
+
     public BagInventory(ItemStack itemStack)
     {
         this.bagStack = itemStack;
@@ -64,7 +66,20 @@ public class BagInventory implements IItemHandlerModifiable
     @Override
     public int getSlots()
     {
-        return 119;
+        NBTTagCompound nbt;
+        if (bagStack.hasTagCompound())
+            nbt = bagStack.getTagCompound();
+        else
+            nbt = new NBTTagCompound();
+        if (!nbt.hasKey("SC"))
+            nbt.setByte("SC", (byte) 1);
+        slotCount = nbt.getByte("SC");
+        if (slotCount < 1)
+        {
+            slotCount = 1;
+            nbt.setByte("SC", (byte) 1);
+        }
+        return slotCount;
     }
 
     @Nonnull
@@ -169,65 +184,95 @@ public class BagInventory implements IItemHandlerModifiable
             nbt = bagStack.getTagCompound();
         else
             nbt = new NBTTagCompound();
-
+        if (!nbt.hasKey("SC"))
+            nbt.setByte("SC", (byte) 1);
+        slotCount = nbt.getByte("SC");
+        if (slotCount < 1)
+        {
+            slotCount = 1;
+            nbt.setByte("SC", (byte) 1);
+        }
         switch (id)
         {
             case 1://first row
                 nbt.setBoolean("R1", true);
+                slotCount += 13;
+                nbt.setByte("SC", slotCount);
                 container.UpgradeSlotCount(this);
                 container.AddRowSlot(this, 1);
                 break;
             case 2://second row
                 nbt.setBoolean("R2", true);
+                slotCount += 13;
+                nbt.setByte("SC", slotCount);
                 container.UpgradeSlotCount(this);
                 container.AddRowSlot(this, 2);
                 break;
             case 3://third row
                 nbt.setBoolean("R3", true);
+                slotCount += 13;
+                nbt.setByte("SC", slotCount);
                 container.UpgradeSlotCount(this);
                 container.AddRowSlot(this, 3);
                 break;
             case 4://fourth row
                 nbt.setBoolean("R4", true);
+                slotCount += 13;
+                nbt.setByte("SC", slotCount);
                 container.UpgradeSlotCount(this);
                 container.AddRowSlot(this, 4);
                 break;
             case 5://fifth row
                 nbt.setBoolean("R5", true);
+                slotCount += 13;
+                nbt.setByte("SC", slotCount);
                 container.UpgradeSlotCount(this);
                 container.AddRowSlot(this, 5);
                 break;
             case 6://sixth row
                 nbt.setBoolean("R6", true);
+                slotCount += 13;
+                nbt.setByte("SC", slotCount);
                 container.UpgradeSlotCount(this);
                 container.AddRowSlot(this, 6);
                 break;
             case 7://seventh row
                 nbt.setBoolean("R7", true);
+                slotCount += 13;
+                nbt.setByte("SC", slotCount);
                 container.UpgradeSlotCount(this);
                 container.AddRowSlot(this, 7);
                 break;
             case 8://eighth row
                 nbt.setBoolean("R8", true);
+                slotCount += 13;
+                nbt.setByte("SC", slotCount);
                 container.UpgradeSlotCount(this);
                 container.AddRowSlot(this, 8);
                 break;
-            case 9://trash slot
-                nbt.setBoolean("Trash", true);
-                container.UpgradeSlotCount(this);
-                container.AddTrashSlot(this);
-                break;
-            case 10://crafting
+            case 9://crafting
                 nbt.setBoolean("Craft", true);
+                slotCount += 10;
+                nbt.setByte("SC", slotCount);
                 container.UpgradeSlotCount(this);
                 container.AddCraftingSlot(this);
                 break;
-            case 11://smelting
+            case 10://smelting
                 nbt.setBoolean("Smelt", true);
+                slotCount += 3;
+                nbt.setByte("SC", slotCount);
                 container.UpgradeSlotCount(this);
                 container.AddSmeltingSlot(this);
                 break;
+            case 11://trash slot
+                nbt.setBoolean("Trash", true);
+                slotCount += 1;
+                nbt.setByte("SC", slotCount);
+                container.UpgradeSlotCount(this);
+                container.AddTrashSlot(this);
+                break;
         }
+        container.detectAndSendChanges();
     }
 
     public boolean hasUpgrade(int id)
@@ -271,17 +316,17 @@ public class BagInventory implements IItemHandlerModifiable
                 if (nbt.hasKey("R8"))
                     return nbt.getBoolean("R8");
                 else return false;
-            case 9://trash slot
-                if (nbt.hasKey("Trash"))
-                    return nbt.getBoolean("Trash");
-                else return false;
-            case 10://crafting
+            case 9://crafting
                 if (nbt.hasKey("Craft"))
                     return nbt.getBoolean("Craft");
                 else return false;
-            case 11://smelting
+            case 10://smelting
                 if (nbt.hasKey("Smelt"))
                     return nbt.getBoolean("Smelt");
+                else return false;
+            case 11://trash slot
+                if (nbt.hasKey("Trash"))
+                    return nbt.getBoolean("Trash");
                 else return false;
         }
         return false;

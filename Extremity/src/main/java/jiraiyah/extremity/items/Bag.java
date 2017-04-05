@@ -5,7 +5,12 @@ import jiraiyah.extremity.gui.GuiHandler;
 import jiraiyah.extremity.inventories.BagInventory;
 import jiraiyah.extremity.references.Names;
 import jiraiyah.extremity.references.Reference;
+import net.minecraft.block.BlockWorkbench;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.InventoryPlayer;
+import net.minecraft.init.Blocks;
+import net.minecraft.inventory.Container;
+import net.minecraft.inventory.ContainerWorkbench;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -14,6 +19,9 @@ import net.minecraft.util.EnumActionResult;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumHand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.ITextComponent;
+import net.minecraft.util.text.TextComponentTranslation;
+import net.minecraft.world.IInteractionObject;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
@@ -84,9 +92,12 @@ public class Bag extends Item
     @Override
     public ActionResult<ItemStack> onItemRightClick(World worldIn, EntityPlayer player, EnumHand hand)
     {
+        if (worldIn.isRemote)
+            return new ActionResult<>(EnumActionResult.SUCCESS, player.getHeldItem(hand));
         if (!player.isSneaking())
         {
             player.openGui(Extremity.INSTANCE, GuiHandler.BAG_ID, worldIn, hand.ordinal(), 0, 0);
+
         }
         else
         {

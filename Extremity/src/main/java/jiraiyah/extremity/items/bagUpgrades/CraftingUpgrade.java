@@ -18,6 +18,6 @@ public class CraftingUpgrade extends BagUpgradeItemBase
     @Override
     public int getID()
     {
-        return 10;
+        return 9;
     }
 }

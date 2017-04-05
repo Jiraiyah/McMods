@@ -18,6 +18,6 @@ public class SmeltingUpgrade extends BagUpgradeItemBase
     @Override
     public int getID()
     {
-        return 11;
+        return 10;
     }
 }
