@@ -1,0 +1,16 @@
+[
+{
+  "modid": "extremity",
+  "name": "Extremity",
+  "description": "A mod that will add new extremity to what you saw in Minecraft.",
+  "version": "1.0",
+  "mcversion": "1.11.2",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["Jiraiyah"],
+  "credits": "To many people in minecraft forge irc that helped me, Ordinasti, tterrag, gigaherz, masa paleoCrafter and many others.",
+  "logoFile": "assets/examplemod/textures/logo/logo.png",
+  "screenshots": [],
+  "dependencies": ["MinecraftForge", "JLib"]
+}
+]
