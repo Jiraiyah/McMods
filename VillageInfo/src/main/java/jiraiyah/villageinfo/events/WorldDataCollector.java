@@ -17,6 +17,7 @@ import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import org.apache.logging.log4j.core.jmx.Server;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -45,10 +46,12 @@ public class WorldDataCollector
     @SubscribeEvent
     public void worldLoadEvent(WorldEvent.Load event)
     {
+        if (event.getWorld() == null)
+            return;
         if (spawnPoint == null)
-            getSpawnPoint();
+            getSpawnPoint(event.getWorld());
         if (xCoords == null || zCoords == null || xCoords.size() == 0 || zCoords.size() == 0)
-            getSpawnChunks();
+            getSpawnChunks(event.getWorld());
     }
 
     @SubscribeEvent
@@ -57,34 +60,36 @@ public class WorldDataCollector
         removePlayerFromVillageList(event.player.getUniqueID());
     }
 
-    private static void getSpawnChunks()
+    private static void getSpawnChunks(World world)
     {
         boolean foundFirstChunk = false;
         int cnt = 1;
-        IChunkProvider chunkProvider = ServerHelper.getChunkProvider();
         for (int x = spawnPoint.getX() - 256; x < spawnPoint.getX() + 256; x += cnt)
         {
             for (int z = spawnPoint.getX() - 256; z < spawnPoint.getX() + 256; z += cnt)
             {
                 BlockPos tempPos = new BlockPos(x, 0, z);
-                Chunk chunk = ServerHelper.getChunkFromBlockPos(tempPos);
-                if (ServerHelper.isSpawnChunk(chunk.xPosition, chunk.zPosition))
+                Chunk chunk = ServerHelper.getChunkFromBlockPos(tempPos, world);
+                if (chunk != null)
                 {
-                    if (!foundFirstChunk)
+                    if (ServerHelper.isSpawnChunk(chunk.xPosition, chunk.zPosition))
                     {
-                        foundFirstChunk = true;
-                        cnt = 16;
+                        if (!foundFirstChunk)
+                        {
+                            foundFirstChunk = true;
+                            cnt = 16;
+                        }
+                        xCoords.add(chunk.xPosition);
+                        zCoords.add(chunk.zPosition);
                     }
-                    xCoords.add(chunk.xPosition);
-                    zCoords.add(chunk.zPosition);
                 }
             }
         }
     }
 
-    private static void getSpawnPoint()
+    private static void getSpawnPoint(World world)
     {
-        spawnPoint = ServerHelper.getSpawnPoint();
+        spawnPoint = world.getSpawnPoint();
     }
 
     private static void resetVillageDataList()

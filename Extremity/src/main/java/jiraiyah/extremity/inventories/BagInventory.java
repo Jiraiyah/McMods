@@ -1,10 +1,12 @@
 package jiraiyah.extremity.inventories;
 
 import jiraiyah.extremity.containers.BagContainer;
+import jiraiyah.extremity.items.Bag;
 import jiraiyah.jlib.utilities.Log;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
+import net.minecraft.util.ITickable;
 import net.minecraftforge.common.util.Constants;
 import net.minecraftforge.items.IItemHandlerModifiable;
 import net.minecraftforge.items.ItemHandlerHelper;
@@ -332,5 +334,8 @@ public class BagInventory implements IItemHandlerModifiable
         return false;
     }
 
-
+    public void sendMessage()
+    {
+        Log.info("==========================>");
+    }
 }

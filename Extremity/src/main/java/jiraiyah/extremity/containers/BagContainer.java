@@ -5,6 +5,7 @@ import jiraiyah.extremity.slots.BagSlot;
 import jiraiyah.extremity.slots.BagUpgradeSlot;
 import jiraiyah.extremity.slots.LockedSlot;
 import jiraiyah.extremity.slots.TrashSlot;
+import jiraiyah.jlib.slots.SpecialSlot;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.*;
@@ -12,6 +13,9 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.world.World;
 import net.minecraftforge.items.IItemHandler;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 public class BagContainer extends Container
@@ -27,15 +31,21 @@ public class BagContainer extends Container
 
     private InventoryPlayer playerInventory;
     private World world;
+    private List<Slot> bagSlotList = new ArrayList<>();
+    private List<Slot> playerSlotList = new ArrayList<>();
 
     public BagContainer(IInventory playerInventory, IItemHandler bagInventory, int blockedSlot, World world)
     {
+        bagSlotList.clear();
+        playerSlotList.clear();
         this.playerInventory = (InventoryPlayer)playerInventory;
         this.world = world;
         this.bagInventory = bagInventory;
         AddCraftingSlot(bagInventory);
         bindPlayerInventory(playerInventory, blockedSlot);
-        addSlotToContainer(new BagUpgradeSlot(bagInventory, 499, 228, 210));
+        Slot upgradeSlot =new BagUpgradeSlot(bagInventory, 499, 228, 210);
+        bagSlotList.add(upgradeSlot);
+        addSlotToContainer(upgradeSlot);
         for (int i = 1; i < 9; i++)
             AddRowSlot(bagInventory, i);
         //TODO : Smelting
@@ -61,17 +71,18 @@ public class BagContainer extends Container
 
     public void AddRowSlot(IItemHandler bagInventory, int row)
     {
+        BagSlot slot;
         BagInventory bag = (BagInventory) bagInventory;
         if(bag.hasUpgrade(row))
             for (int i = 0; i < 13; i++)
             {
-                addSlotToContainer(new BagSlot(bagInventory, (row - 1) * 13 + i, 12 + i * 18, 5 + (row - 1) *
-                        18));
+                slot = new BagSlot(bagInventory, (row - 1) * 13 + i, 12 + i * 18, 5 + (row - 1) *
+                        18);
+                bagSlotList.add(slot);
+                addSlotToContainer(slot);
             }
     }
 
-    // 1 Slot : SlotCrafting, 0
-    // 9 Slots : 0 - 8
     public void AddCraftingSlot(IItemHandler bagInventory)
     {
         BagInventory bag = (BagInventory) bagInventory;
@@ -83,8 +94,9 @@ public class BagContainer extends Container
             {
                 for (int j = 0; j < 3; ++j)
                 {
-                    this.addSlotToContainer(new Slot(this.craftMatrix, j + i * 3, 5 + j * 18,
-                            152 + i * 18));
+                    SpecialSlot craftingSlot =new SpecialSlot(this.craftMatrix, j + i * 3, 5 + j * 18,
+                            152 + i * 18);
+                    this.addSlotToContainer(craftingSlot);
                 }
             }
         }
@@ -127,59 +139,122 @@ public class BagContainer extends Container
 
     }
 
-    // 27 Slots : 9 - 35
-    // 9 Slots : 0 - 8
     private void bindPlayerInventory (IInventory playerInventory, int blockedSlot)
     {
+        Slot slot;
         for (int l = 0; l < 3; l++)
         {
             for (int j = 0; j < 9; j++)
             {
                 int index = j + l * 9 + 9;
-                addSlotToContainer(blockedSlot == index
+                slot = blockedSlot == index
                 ? new LockedSlot(playerInventory, index, 62 + j * 18, 152 + l * 18)
-                : new Slot(playerInventory, index, 62 + j * 18, 152 + l * 18));
+                : new Slot(playerInventory, index, 62 + j * 18, 152 + l * 18);
+                playerSlotList.add(slot);
+                addSlotToContainer(slot);
             }
         }
 
         for (int j = 0; j < 9; j++)
         {
-            addSlotToContainer(blockedSlot == j
+            slot = blockedSlot == j
                     ? new LockedSlot(playerInventory, j, 62 + j * 18, 210)
-                    : new Slot(playerInventory, j, 62 + j * 18, 210));
+                    : new Slot(playerInventory, j, 62 + j * 18, 210);
+            playerSlotList.add(slot);
+            addSlotToContainer(slot);
         }
     }
 
     @Override
     public ItemStack transferStackInSlot(EntityPlayer playerIn, int index)
     {
+        boolean clickedInBag = false;
+        boolean clickedInPlayer = false;
         ItemStack itemstack = ItemStack.EMPTY;
         Slot slot = inventorySlots.get(index);
-        if (slot != null && slot.getHasStack())
+        if (slot == null || !slot.getHasStack())
+            return itemstack;
+        ItemStack itemstack1 = slot.getStack();
+        if (index == 0)
         {
-            ItemStack itemstack1 = slot.getStack();
             itemstack = itemstack1.copy();
-            if (index < bagSlots)
-            {
-                if (!mergeItemStack(itemstack1, 0, inventorySlots.size(), true))
-                {
-                    return ItemStack.EMPTY;
-                }
-            }
-            else if (!mergeItemStack(itemstack1, 0, bagSlots, false))
-            {
+            itemstack1.getItem().onCreated(itemstack1, this.world, playerIn);
+
+            if (!this.mergeItemStack(itemstack1, 10, 46, true))
                 return ItemStack.EMPTY;
-            }
-            if (itemstack1.getCount() == 0)
-            {
+
+            slot.onSlotChange(itemstack1, itemstack);
+            if (itemstack1.isEmpty())
                 slot.putStack(ItemStack.EMPTY);
-            }
             else
-            {
                 slot.onSlotChanged();
+
+            if (itemstack1.getCount() == itemstack.getCount())
+                return ItemStack.EMPTY;
+            ItemStack itemstack2 = slot.onTake(playerIn, itemstack1);
+
+            if (index == 0)
+                playerIn.dropItem(itemstack2, false);
+            return itemstack;
+        }
+
+
+        if (bagSlotList.contains(slot))
+            clickedInBag = true;
+        else if (playerSlotList.contains(slot))
+            clickedInPlayer = true;
+
+        if (clickedInBag)
+            handleItemTransfer(slot, playerSlotList);
+        else if(clickedInPlayer)
+            handleItemTransfer(slot, bagSlotList);
+        if (itemstack1.getCount() == 0)
+            slot.putStack(ItemStack.EMPTY);
+        else
+            slot.onSlotChanged();
+        return itemstack;
+    }
+
+    private void handleItemTransfer(Slot origin, List<Slot> targetList)
+    {
+        ItemStack slotStack = origin.getStack();
+
+        for (Slot target : targetList)
+        {
+            ItemStack targetStack = target.getStack();
+            if (targetStack == ItemStack.EMPTY && target.isItemValid(slotStack))
+            {
+                target.putStack(slotStack);
+                origin.putStack(ItemStack.EMPTY);
+                target.onSlotChanged();
+                origin.onSlotChanged();
+                break;
+            }
+            else if (target.isItemValid(slotStack))
+            {
+                if (!target.isItemValid(slotStack) || targetStack.getCount() >= target.getSlotStackLimit())
+                    continue;
+                if (targetStack.getItem() != slotStack.getItem() || targetStack.getItem().getMetadata(targetStack) !=
+                        slotStack.getItem().getMetadata(slotStack))
+                    continue;
+                int transferableCount = target.getSlotStackLimit() - targetStack.getCount();
+                if (transferableCount >= slotStack.getCount())
+                {
+                    targetStack.grow(slotStack.getCount());
+                    slotStack.setCount(0);
+                }
+                else
+                {
+                    targetStack.grow(transferableCount);
+                    slotStack.shrink(transferableCount);
+                }
+                target.putStack(targetStack);
+                origin.putStack(slotStack);
+                target.onSlotChanged();
+                origin.onSlotChanged();
+                break;
             }
         }
-        return itemstack;
     }
 
     @Override
@@ -213,131 +288,5 @@ public class BagContainer extends Container
                 break;
             }
         return index;
-    }
-
-    @Override
-    protected boolean mergeItemStack(ItemStack stack, int startIndex, int endIndex, boolean reverseDirection)
-    {
-        boolean flag = false;
-        int i = startIndex;
-
-        if (reverseDirection)
-        {
-            i = endIndex - 1;
-        }
-
-        if (stack.isStackable())
-        {
-            while (!stack.isEmpty())
-            {
-                if (reverseDirection)
-                {
-                    if (i < startIndex)
-                    {
-                        break;
-                    }
-                }
-                else if (i >= endIndex)
-                {
-                    break;
-                }
-
-                Slot slot = (Slot)this.inventorySlots.get(i);
-                if (slot != trashSlot)
-                {
-                    ItemStack itemstack = slot.getStack();
-
-                    if (!itemstack.isEmpty() && itemstack.getItem() == stack.getItem() && (!stack.getHasSubtypes() || stack.getMetadata() == itemstack.getMetadata()) && ItemStack.areItemStackTagsEqual(stack, itemstack))
-                    {
-                        int j = itemstack.getCount() + stack.getCount();
-                        int maxSize = Math.min(slot.getSlotStackLimit(), stack.getMaxStackSize());
-
-                        if (j <= maxSize)
-                        {
-                            stack.setCount(0);
-                            itemstack.setCount(j);
-                            slot.onSlotChanged();
-                            flag = true;
-                        }
-                        else if (itemstack.getCount() < maxSize)
-                        {
-                            stack.shrink(maxSize - itemstack.getCount());
-                            itemstack.setCount(maxSize);
-                            slot.onSlotChanged();
-                            flag = true;
-                        }
-                    }
-                }
-
-                if (reverseDirection)
-                {
-                    --i;
-                }
-                else
-                {
-                    ++i;
-                }
-            }
-        }
-
-        if (!stack.isEmpty())
-        {
-            if (reverseDirection)
-            {
-                i = endIndex - 1;
-            }
-            else
-            {
-                i = startIndex;
-            }
-
-            while (true)
-            {
-                if (reverseDirection)
-                {
-                    if (i < startIndex)
-                    {
-                        break;
-                    }
-                }
-                else if (i >= endIndex)
-                {
-                    break;
-                }
-
-                Slot slot1 = (Slot)this.inventorySlots.get(i);
-                if (slot1 != trashSlot)
-                {
-                    ItemStack itemstack1 = slot1.getStack();
-
-                    if (itemstack1.isEmpty() && slot1.isItemValid(stack))
-                    {
-                        if (stack.getCount() > slot1.getSlotStackLimit())
-                        {
-                            slot1.putStack(stack.splitStack(slot1.getSlotStackLimit()));
-                        }
-                        else
-                        {
-                            slot1.putStack(stack.splitStack(stack.getCount()));
-                        }
-
-                        slot1.onSlotChanged();
-                        flag = true;
-                        break;
-                    }
-                }
-
-                if (reverseDirection)
-                {
-                    --i;
-                }
-                else
-                {
-                    ++i;
-                }
-            }
-        }
-
-        return flag;
     }
 }

@@ -34,24 +34,14 @@ public class ServerHelper
         return FMLServerHandler.instance().getServer();
     }
 
-    public static IChunkProvider getChunkProvider()
+    public static Chunk getChunkFromBlockPos(BlockPos pos, World world)
     {
-        return getServerWorld().getChunkProvider();
-    }
-
-    public static Chunk getChunkFromBlockPos(BlockPos pos)
-    {
-        return getServerWorld().getChunkFromBlockCoords(pos);
+        return world.getChunkProvider().getLoadedChunk(pos.getX() >> 4, pos.getZ() >> 4);
     }
 
     public static boolean isSpawnChunk(int x, int z)
     {
         return getServerWorld().isSpawnChunk(x, z);
-    }
-
-    public static BlockPos getSpawnPoint()
-    {
-        return getServerWorld().getSpawnPoint();
     }
 
     public static boolean isPlayerOP (String playerName)

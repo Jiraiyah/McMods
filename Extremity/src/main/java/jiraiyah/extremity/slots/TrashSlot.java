@@ -1,15 +1,12 @@
 package jiraiyah.extremity.slots;
 
-import jiraiyah.extremity.items.Bag;
-import net.minecraft.inventory.IInventory;
-import net.minecraft.inventory.Slot;
+import jiraiyah.jlib.slots.SpecialSlotItemHandler;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.items.SlotItemHandler;
 
 import javax.annotation.Nonnull;
 
-public class TrashSlot extends SlotItemHandler
+public class TrashSlot extends SpecialSlotItemHandler
 {
     public TrashSlot(IItemHandler inventoryIn, int index, int xPosition, int yPosition)
     {
