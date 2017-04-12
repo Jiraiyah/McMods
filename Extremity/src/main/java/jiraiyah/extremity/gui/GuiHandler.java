@@ -1,5 +1,6 @@
 package jiraiyah.extremity.gui;
 
+import baubles.api.BaublesApi;
 import jiraiyah.extremity.containers.BagContainer;
 import jiraiyah.extremity.inventories.BagInventory;
 import jiraiyah.extremity.items.Bag;
@@ -22,8 +23,12 @@ public class GuiHandler implements IGuiHandler
         switch (ID)
         {
             case BAG_ID :
-                ItemStack heldItem = player.getHeldItem(EnumHand.values()[x]);
-                if (heldItem.getCount() > 0)
+                ItemStack heldItem = ItemStack.EMPTY;
+                if (x == 0)
+                    heldItem = player.getHeldItem(EnumHand.values()[y]);
+                else if (x == 1)
+                    heldItem = BaublesApi.getBaublesHandler(player).getStackInSlot(y);
+                if (heldItem.getCount() > 0 && heldItem != ItemStack.EMPTY)
                 {
                     BagInventory inventory = Bag.getItems(heldItem);
                     int blockedSlot = -1;
@@ -43,8 +48,12 @@ public class GuiHandler implements IGuiHandler
         switch (ID)
         {
             case BAG_ID :
-                ItemStack heldItem = player.getHeldItem(EnumHand.values()[x]);
-                if (heldItem.getCount() > 0)
+                ItemStack heldItem = ItemStack.EMPTY;
+                if (x == 0)
+                    heldItem = player.getHeldItem(EnumHand.values()[y]);
+                else if (x == 1)
+                    heldItem = BaublesApi.getBaublesHandler(player).getStackInSlot(y);
+                if (heldItem.getCount() > 0 && heldItem != ItemStack.EMPTY)
                 {
                     BagInventory inventory = Bag.getItems(heldItem);
                     int blockedSlot = -1;

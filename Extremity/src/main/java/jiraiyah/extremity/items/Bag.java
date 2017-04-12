@@ -7,29 +7,20 @@ import jiraiyah.extremity.gui.GuiHandler;
 import jiraiyah.extremity.inventories.BagInventory;
 import jiraiyah.extremity.references.Names;
 import jiraiyah.extremity.references.Reference;
-import jiraiyah.jlib.utilities.Log;
 import net.minecraft.block.Block;
-import net.minecraft.block.BlockFurnace;
-import net.minecraft.block.BlockWorkbench;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.init.Blocks;
 import net.minecraft.init.Items;
-import net.minecraft.inventory.Container;
-import net.minecraft.inventory.ContainerWorkbench;
-import net.minecraft.inventory.ItemStackHelper;
 import net.minecraft.item.*;
 import net.minecraft.item.crafting.FurnaceRecipes;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.nbt.NBTTagList;
 import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentTranslation;
-import net.minecraft.world.IInteractionObject;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.CapabilityInject;
@@ -39,7 +30,6 @@ import net.minecraftforge.items.IItemHandler;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
-import java.util.ArrayList;
 import java.util.List;
 
 @Optional.Interface(modid = "baubles", iface = "baubles.api.IBauble")
@@ -98,7 +88,9 @@ public class Bag extends Item implements IBauble
     @Override
     public EnumActionResult onItemUse(EntityPlayer player, World worldIn, BlockPos pos, EnumHand hand, EnumFacing facing, float hitX, float hitY, float hitZ)
     {
-        player.openGui(Extremity.INSTANCE, GuiHandler.BAG_ID, worldIn, hand.ordinal(), 0, 0);
+        if (worldIn.isRemote)
+            return EnumActionResult.SUCCESS;
+        player.openGui(Extremity.INSTANCE, GuiHandler.BAG_ID, worldIn, 0, hand.ordinal(), 0);
         return EnumActionResult.SUCCESS;
     }
 
@@ -137,14 +129,7 @@ public class Bag extends Item implements IBauble
         if (compound == null)
             compound = new NBTTagCompound();
         NonNullList<ItemStack> furnaceItemStacks = NonNullList.<ItemStack>withSize(3, ItemStack.EMPTY);
-        ItemStackHelper.loadAllItems(compound, furnaceItemStacks);
-
-        //TODO : Get the List<Items> manually from NBT
-        furnaceItemStacks = getFurnaceItems(stack);
-
-
-
-
+        furnaceItemStacks = getFurnaceItems(compound, furnaceItemStacks);
         int furnaceBurnTime = compound.getInteger("BurnTime");
         int cookTime = compound.getInteger("CookTime");
         int cookingTime = compound.getInteger("CookingTime");
@@ -160,8 +145,8 @@ public class Bag extends Item implements IBauble
         {
             --furnaceBurnTime;
         }
-        if (!world.isRemote)
-        {
+        /*if (!world.isRemote)
+        {*/
             ItemStack itemstack = furnaceItemStacks.get(1);
             if (isBurning || !itemstack.isEmpty() && !furnaceItemStacks.get(0).isEmpty())
             {
@@ -213,22 +198,53 @@ public class Bag extends Item implements IBauble
             {
                 world.getChunkFromBlockCoords(entity.getPosition()).setChunkModified();
             }
-        }
-
-        //write Values to Itemstack NBT
-        ItemStackHelper.saveAllItems(compound, furnaceItemStacks);
-
-        //TODO : Set the List<Items> manually from NBT
-        furnaceItemStacks = setFurnaceItems(stack);
-
-
-
-
+        //}
+        //TODO : Fix this !!!!
+        //setFurnaceItems(compound, furnaceItemStacks);
         compound.setInteger("BurnTime", (short)furnaceBurnTime);
         compound.setInteger("CookTime", (short)cookTime);
         compound.setInteger("CookingTime", (short)cookingTime);
         compound.setInteger("CookTimeTotal", (short)totalCookTime);
         stack.setTagCompound(compound);
+    }
+
+    private NonNullList<ItemStack> getFurnaceItems(NBTTagCompound tag, NonNullList<ItemStack> list)
+    {
+        NBTTagList nbttaglist = tag.getTagList(Names.NBT.BAG_FURNACE_ITEM, 10);
+
+        for (int i = 0; i < nbttaglist.tagCount(); ++i)
+        {
+            NBTTagCompound nbttagcompound = nbttaglist.getCompoundTagAt(i);
+            int j = nbttagcompound.getByte(Names.NBT.BAG_FURNACE_SLOT) & 255;
+
+            if (j >= 0 && j < list.size())
+            {
+                list.set(j, new ItemStack(nbttagcompound));
+            }
+        }
+        return list;
+    }
+
+    private NBTTagCompound setFurnaceItems(NBTTagCompound tag, NonNullList<ItemStack> list)
+    {
+        NBTTagList nbttaglist = new NBTTagList();
+
+        for (int i = 0; i < list.size(); ++i)
+        {
+            ItemStack itemstack = (ItemStack)list.get(i);
+
+            if (!itemstack.isEmpty())
+            {
+                NBTTagCompound nbttagcompound = new NBTTagCompound();
+                nbttagcompound.setByte(Names.NBT.BAG_FURNACE_SLOT, (byte)i);
+                itemstack.writeToNBT(nbttagcompound);
+                nbttaglist.appendTag(nbttagcompound);
+            }
+        }
+
+        tag.setTag(Names.NBT.BAG_FURNACE_ITEM, nbttaglist);
+
+        return tag;
     }
 
     @Override
@@ -317,5 +333,10 @@ public class Bag extends Item implements IBauble
 
             itemstack.shrink(1);
         }
+    }
+
+    public static boolean isItemFuel(ItemStack stack)
+    {
+        return getItemBurnTime(stack) > 0;
     }
 }

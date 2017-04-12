@@ -2,6 +2,8 @@ package jiraiyah.extremity.inventories;
 
 import jiraiyah.extremity.containers.BagContainer;
 import jiraiyah.extremity.items.Bag;
+import jiraiyah.extremity.references.Names;
+import jiraiyah.extremity.references.Reference;
 import jiraiyah.jlib.utilities.Log;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -21,6 +23,8 @@ public class BagInventory implements IItemHandlerModifiable
 
     private byte slotCount = 1;
 
+    private int furnaceItem, furnaceFuel, furnaceResult;
+
     public BagInventory(ItemStack itemStack)
     {
         this.bagStack = itemStack;
@@ -38,21 +42,36 @@ public class BagInventory implements IItemHandlerModifiable
     @Override
     public void setStackInSlot(int slot, @Nonnull ItemStack stack)
     {
-        //validateSlotIndex(slot);
+        NBTTagCompound nbt = getTag();
+        furnaceItem = nbt.getShort("FurnaceItem");
+        furnaceFuel = nbt.getShort("FurnaceFuel");
+        furnaceResult = nbt.getShort("FurnaceResult");
 
+        String slotText;
+        String itemText;
+        if (slot == furnaceItem || slot == furnaceFuel || slot == furnaceResult)
+        {
+            slotText = Names.NBT.BAG_FURNACE_SLOT;
+            itemText = Names.NBT.BAG_FURNACE_ITEM;
+        }
+        else
+        {
+            slotText = Names.NBT.BAG_NORMAL_SLOT;
+            itemText = Names.NBT.BAG_NORMAL_ITEM;
+        }
         NBTTagCompound itemTag = null;
         boolean hasStack = stack.getCount() > 0;
         if (hasStack)
         {
             itemTag = new NBTTagCompound();
-            itemTag.setInteger("Slot", slot);
+            itemTag.setInteger(slotText, slot);
             stack.writeToNBT(itemTag);
         }
-        NBTTagList tagList = getTag().getTagList("Items", Constants.NBT.TAG_COMPOUND);
+        NBTTagList tagList = getTag().getTagList(itemText, Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < tagList.tagCount(); i++)
         {
             NBTTagCompound existing = tagList.getCompoundTagAt(i);
-            if (existing.getInteger("Slot") != slot)
+            if (existing.getInteger(slotText) != slot)
                 continue;
             if (hasStack)
                 tagList.set(i, itemTag);
@@ -62,7 +81,7 @@ public class BagInventory implements IItemHandlerModifiable
         }
         if (hasStack)
             tagList.appendTag(itemTag);
-        getTag().setTag("Items", tagList);
+        getTag().setTag(itemText, tagList);
     }
 
     @Override
@@ -88,12 +107,27 @@ public class BagInventory implements IItemHandlerModifiable
     @Override
     public ItemStack getStackInSlot(int slot)
     {
-        //validateSlotIndex(slot);
-        NBTTagList tagList = getTag().getTagList("Items", Constants.NBT.TAG_COMPOUND);
+        NBTTagCompound nbt = getTag();
+        furnaceItem = nbt.getShort("FurnaceItem");
+        furnaceFuel = nbt.getShort("FurnaceFuel");
+        furnaceResult = nbt.getShort("FurnaceResult");
+        String slotText;
+        String itemText;
+        if (slot == furnaceItem || slot == furnaceFuel || slot == furnaceResult)
+        {
+            slotText = Names.NBT.BAG_FURNACE_SLOT;
+            itemText = Names.NBT.BAG_FURNACE_ITEM;
+        }
+        else
+        {
+            slotText = Names.NBT.BAG_NORMAL_SLOT;
+            itemText = Names.NBT.BAG_NORMAL_ITEM;
+        }
+        NBTTagList tagList = getTag().getTagList(itemText, Constants.NBT.TAG_COMPOUND);
         for (int i = 0; i < tagList.tagCount(); i++)
         {
             NBTTagCompound itemTag = tagList.getCompoundTagAt(i);
-            if (itemTag.getInteger("Slot") != slot)
+            if (itemTag.getInteger(slotText) != slot)
                 continue;
             return new ItemStack(itemTag);
         }
@@ -167,12 +201,6 @@ public class BagInventory implements IItemHandlerModifiable
     {
         return 64;
     }
-
-    /*private void validateSlotIndex(int slot)
-    {
-        if (slot < 0 || slot >= getSlots())
-            throw new RuntimeException("Slot " + slot + " not is valid range - [0,"+ getSlots() +"]");
-    }*/
 
     public void setContainer(BagContainer container)
     {
@@ -332,10 +360,5 @@ public class BagInventory implements IItemHandlerModifiable
                 else return false;
         }
         return false;
-    }
-
-    public void sendMessage()
-    {
-        Log.info("==========================>");
     }
 }

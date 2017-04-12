@@ -1,16 +1,15 @@
 package jiraiyah.extremity.containers;
 
 import jiraiyah.extremity.inventories.BagInventory;
-import jiraiyah.extremity.slots.BagSlot;
-import jiraiyah.extremity.slots.BagUpgradeSlot;
-import jiraiyah.extremity.slots.LockedSlot;
-import jiraiyah.extremity.slots.TrashSlot;
+import jiraiyah.extremity.slots.*;
 import jiraiyah.jlib.slots.SpecialSlot;
+import jiraiyah.jlib.slots.SpecialSlotItemHandler;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.InventoryPlayer;
 import net.minecraft.inventory.*;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.CraftingManager;
+import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 import net.minecraftforge.items.IItemHandler;
 
@@ -21,18 +20,16 @@ import java.util.List;
 public class BagContainer extends Container
 {
     public int bagSlots;
-
     private IItemHandler bagInventory;
-
     private TrashSlot trashSlot;
-
     public InventoryCrafting craftMatrix = new InventoryCrafting(this, 3, 3);
     public IInventory craftResult = new InventoryCraftResult();
-
     private InventoryPlayer playerInventory;
     private World world;
     private List<Slot> bagSlotList = new ArrayList<>();
     private List<Slot> playerSlotList = new ArrayList<>();
+
+    private int furnaceItemIndex, furnaceFuelIndex, furnaceResultIndex;
 
     public BagContainer(IInventory playerInventory, IItemHandler bagInventory, int blockedSlot, World world)
     {
@@ -48,7 +45,7 @@ public class BagContainer extends Container
         addSlotToContainer(upgradeSlot);
         for (int i = 1; i < 9; i++)
             AddRowSlot(bagInventory, i);
-        //TODO : Smelting
+        AddSmeltingSlot(bagInventory);
         AddTrashSlot(bagInventory);
         UpgradeSlotCount(bagInventory);
         ((BagInventory) bagInventory).setContainer(this);
@@ -136,7 +133,25 @@ public class BagContainer extends Container
 
     public void AddSmeltingSlot(IItemHandler bagInventory)
     {
-
+        SpecialSlotItemHandler furnaceItem = new SpecialSlotItemHandler(bagInventory, 501, 228,
+                150);
+        addSlotToContainer(furnaceItem);
+        furnaceItemIndex = furnaceItem.getSlotIndex();
+        BagFuelSlot fuelSlot = new BagFuelSlot(bagInventory, 502, 228, 168);
+        addSlotToContainer(fuelSlot);
+        furnaceFuelIndex = fuelSlot.getSlotIndex();
+        BagFurnaceOutputSlot furnaceOut = new BagFurnaceOutputSlot(playerInventory.player, bagInventory, 503, 228,
+            189);
+        addSlotToContainer(furnaceOut);
+        furnaceResultIndex = furnaceOut.getSlotIndex();
+        ItemStack bag = ((BagInventory)bagInventory).bagStack;
+        NBTTagCompound nbt = bag.getTagCompound();
+        if (nbt == null)
+            nbt = new NBTTagCompound();
+        nbt.setShort("FurnaceItem", (short)furnaceItemIndex);
+        nbt.setShort("FurnaceFuel", (short)furnaceFuelIndex);
+        nbt.setShort("FurnaceResult", (short)furnaceResultIndex);
+        bag.setTagCompound(nbt);
     }
 
     private void bindPlayerInventory (IInventory playerInventory, int blockedSlot)

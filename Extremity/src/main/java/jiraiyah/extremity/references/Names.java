@@ -26,6 +26,10 @@ public class Names
 
     public class NBT
     {
+        public static final String BAG_FURNACE_SLOT = "FurnaceSlot";
+        public static final String BAG_FURNACE_ITEM = "FurnaceItems";
 
+        public static final String BAG_NORMAL_SLOT = "Slot";
+        public static final String BAG_NORMAL_ITEM = "Items";
     }
 }
